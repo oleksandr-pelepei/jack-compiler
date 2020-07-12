@@ -32,6 +32,8 @@ class SymbolTable {
 
   startSubroutine() {
     this._subroutineTable = {};
+    this._counters[VariableKind.ARG] = 0;
+    this._counters[VariableKind.VAR] = 0;
   }
 
   kindOf(name) {
