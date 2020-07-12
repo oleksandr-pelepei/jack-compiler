@@ -1,0 +1,24 @@
+{
+  "name": "jack-compiler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest ./src",
+    "test:watch": "npm run test -- --watch"
+  },
+  "bin": {
+    "jack-compiler": "./bin/jack-compiler.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/glob": "^7.1.2",
+    "@types/jest": "^25.2.3",
+    "jest": "^26.0.1"
+  },
+  "dependencies": {
+    "glob": "^7.1.6"
+  }
+}
