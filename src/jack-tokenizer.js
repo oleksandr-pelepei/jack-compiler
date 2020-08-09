@@ -1,7 +1,7 @@
 const {TokenTypes} = require('./token-types');
 
 class JackTokenizer {
-  #regexp = /(?:(\/\*\*?(?:.|\n)*?\*\/)|(\/\/.*)|((?:\s|\n)+))|(?<token>(?:'[^']*?')|(?:"[^"]*?")|(?:[^\w ])|(?:\w+))/gi;
+  #regexp = /(?:(\/\*\*?(?:.|\s)*?\*\/)|(\/\/.*)|(\s+))|(?<token>(?:'[^']*?')|(?:"[^"]*?")|(?:[^\w ])|(?:\w+))/gim;
 
   #script  = '';
   #token   = '';
@@ -11,10 +11,16 @@ class JackTokenizer {
   constructor(script) {
     this.#script = script;
     this._scan();
+    this.advance();
   }
 
   hasMoreTokens() {
     return this.#pointer < this.#tokens.length;
+  }
+
+  undo() {
+    this.#pointer--;
+    this.#token = this.#tokens[this.#pointer-1];
   }
 
   advance() {
@@ -27,8 +33,10 @@ class JackTokenizer {
   }
 
   _scan() {
+    const regexp = new RegExp(this.#regexp);
+
     while (true) {
-      const match = this.#regexp.exec(this.#script);
+      const match = regexp.exec(this.#script);
 
       if (match) {
         if (match.groups.token) {
@@ -46,6 +54,10 @@ class JackTokenizer {
 
   getTokenType() {
     return TokenTypes.getTokenType(this.#token);
+  }
+
+  isTokenType(type) {
+    return type === this.getTokenType();
   }
 
   keyWord() {
@@ -68,6 +80,22 @@ class JackTokenizer {
     const match = /["'](?<stringVal>.*)["']/.exec(this.#token);
 
     return match.groups.stringVal;
+  }
+
+  getPrevValue() {
+    this.undo();
+    const value = this.getValue();
+    this.advance();
+
+    return value;
+  }
+
+  getNextValue() {
+    this.advance();
+    const value = this.getValue();
+    this.undo();
+
+    return value;
   }
 
   getValue() {

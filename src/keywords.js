@@ -1,17 +1,32 @@
 class Keywords {
   static CLASS  = 'class';
   static STATIC = 'static';
-  static FIELD  = 'field'
+  static FIELD  = 'field';
+  static CONSTRUCTOR = 'constructor';
+  static FUNCTION = 'function';
+  static METHOD = 'method';
+  static VAR = 'var';
+  static VOID = 'void';
+  static RETURN = 'return';
+  static LET = 'let';
+  static IF = 'if';
+  static ELSE = 'else';
+  static DO = 'do';
+  static WHILE = 'while';
+  static TRUE = 'true';
+  static FALSE = 'false';
+  static NULL = 'null';
+  static THIS = 'this';
 }
 
 const KEYWORDS = [
   Keywords.CLASS,
-  'constructor',
-  'function',
-  'method',
+  Keywords.CONSTRUCTOR,
+  Keywords.FUNCTION,
+  Keywords.METHOD,
   Keywords.FIELD,
   Keywords.STATIC,
-  'var',
+  Keywords.VAR,
   'int',
   'char',
   'boolean',
@@ -20,7 +35,7 @@ const KEYWORDS = [
   'false',
   'null',
   'this',
-  'let',
+  Keywords.LET,
   'do',
   'if',
   'else',

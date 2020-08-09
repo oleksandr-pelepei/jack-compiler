@@ -2,27 +2,8 @@ const os = require('os');
 const fs = require('fs');
 const glob = require('glob');
 const {JackTokenizer} = require('./jack-tokenizer');
-const {TokenTypes} = require('./token-types');
-
-function camelize(str) {
-  return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
-    return index === 0 ? word.toLowerCase() : word.toUpperCase();
-  }).replace(/[_\s]+/g, '');
-}
-
-function escapeHtml(text) {
-  var map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-
-  return text.replace(/[&<>"']/g, function (m) {
-    return map[m];
-  });
-}
+const {JackCompiler} = require('./compiler');
+const {VmWriter} = require('./vm-writer');
 
 class Main {
   static main() {
@@ -35,28 +16,16 @@ class Main {
         continue;
       }
 
-      const xmlFilePath = file.replace('.jack', '.dist.xml');
+      const vmFilePath = file.replace('.jack', '.vm');
       const script = fs.readFileSync(file, {
         encoding: 'utf8'
       });
       const tokenizer = new JackTokenizer(script);
+      const vmWriter = new VmWriter(fs.createWriteStream(vmFilePath));
+      const jackCompiler = new JackCompiler(tokenizer, vmWriter);
 
-      let xml = '';
-
-      while (tokenizer.hasMoreTokens()) {
-        tokenizer.advance();
-
-        const value = tokenizer.getValue();
-        const tokenTag = camelize(tokenizer.getTokenType());
-
-        xml += `<${tokenTag}>${escapeHtml(value)}</${tokenTag}> ${os.EOL}`
-      }
-
-      xml = `<tokens>
-        ${xml}
-      </tokens>`;
-
-      fs.writeFileSync(xmlFilePath, xml);
+      jackCompiler.compile();
+      vmWriter.close();
     }
   }
 }
