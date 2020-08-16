@@ -26,15 +26,21 @@ class SubroutineDecCompiler extends BaseCompiler {
   }
 
   compile() {
-    this.jackCompiler.symbolTable.startSubroutine();
-
-    this._vmWriter.writeComment('subroutine');
+    const symbolTable = this.jackCompiler.symbolTable;
+    symbolTable.startSubroutine();
 
     const keyword = this._tokenizer.getValue();
     this._tokenizer.advance();
     const returnType = this._tokenizer.getValue();
     this._tokenizer.advance();
     const subroutineName = this._tokenizer.getValue();
+
+    if (keyword === Keywords.CONSTRUCTOR) {
+      symbolTable.define(Keywords.THIS, returnType, VariableKind.VAR);
+    } else if (keyword === Keywords.METHOD) {
+      symbolTable.define(Keywords.THIS, this.jackCompiler.className, VariableKind.ARG);
+    }
+
     this._tokenizer.advance(); // (
     this._tokenizer.advance();
     this.parameterListCompiler.compile();
@@ -51,8 +57,15 @@ class SubroutineDecCompiler extends BaseCompiler {
     this._vmWriter.writeFunction(fnName, nLocalCount);
 
     if (keyword === Keywords.CONSTRUCTOR) {
-      this._vmWriter.writePush(Segments.CONST, this.jackCompiler.symbolTable.countVars(VariableKind.FIELD));
+      this._vmWriter.writePush(Segments.CONST, symbolTable.countVars(VariableKind.FIELD));
       this._vmWriter.writeCall('Memory.alloc', 1);
+      this._vmWriter.writePop(VariableKind.getVarKindSegment(symbolTable.kindOf(Keywords.THIS)),
+        symbolTable.indexOf(Keywords.THIS));
+    }
+
+    if (keyword === Keywords.METHOD || keyword === Keywords.CONSTRUCTOR) {
+      this._vmWriter.writePush(VariableKind.getVarKindSegment(symbolTable.kindOf(Keywords.THIS)),
+        symbolTable.indexOf(Keywords.THIS));
       this._vmWriter.writePop(Segments.POINTER, 0);
     }
 

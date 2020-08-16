@@ -3,6 +3,7 @@ const {TokenTypes} = require('../token-types');
 const {Segments} = require('../segments');
 const {VariableKind} = require('../variable-kind');
 const {TempPointers} = require('../temp-pointers');
+const {Keywords} = require('../keywords');
 
 const DOT = '.';
 
@@ -22,6 +23,7 @@ class SubroutineCallCompiler extends BaseCompiler {
   }
 
   compile() {
+    const symbolTable = this.jackCompiler.symbolTable;
     const firstIdentifier = this._tokenizer.getValue();
     this._tokenizer.advance();
     const parenthesisOrDot = this._tokenizer.getValue();
@@ -42,23 +44,14 @@ class SubroutineCallCompiler extends BaseCompiler {
       const varKind = this.jackCompiler.symbolTable.kindOf(firstIdentifier);
 
       this._vmWriter.writeComment(`Call variable method ${fnName}`);
-
-      this._vmWriter.writeComment('Setup context for method call');
-      this._vmWriter.writePush(Segments.POINTER, 0);
-      this._vmWriter.writePop(Segments.TEMP, TempPointers.THIS);
       this._vmWriter.writePush(VariableKind.getVarKindSegment(varKind), varIndex);
-      this._vmWriter.writePop(Segments.POINTER, 0);
 
       this._tokenizer.advance();
       this._tokenizer.advance(); // (
       this.expressionListCompiler.compile();
 
       const lastExpCount = this.expressionListCompiler.getLastCount();
-      this._vmWriter.writeCall(fnName, lastExpCount);
-
-      this._vmWriter.writeComment('Restore current object context');
-      this._vmWriter.writePush(Segments.TEMP, TempPointers.THIS);
-      this._vmWriter.writePop(Segments.POINTER, 0);
+      this._vmWriter.writeCall(fnName, lastExpCount + 1);
     } else if (isFunctionCall) {
       const className = firstIdentifier;
       const subroutineName = this._tokenizer.getValue();
@@ -74,10 +67,15 @@ class SubroutineCallCompiler extends BaseCompiler {
       const subroutineName = firstIdentifier;
       const fnName = `${className}.${subroutineName}`;
 
+      this._vmWriter.writePush(
+        VariableKind.getVarKindSegment(symbolTable.kindOf(Keywords.THIS)),
+        symbolTable.indexOf(Keywords.THIS)
+      );
       this.expressionListCompiler.compile();
+
       const lastExpCount = this.expressionListCompiler.getLastCount();
 
-      this._vmWriter.writeCall(fnName, lastExpCount);
+      this._vmWriter.writeCall(fnName, lastExpCount + 1);
     }
 
     if (this._tokenizer.getValue() !== ')') {
